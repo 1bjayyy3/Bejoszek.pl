@@ -188,6 +188,37 @@
             setTimeout(tick, 10);
         }
         tick();
+        <script>
+// 1. Blokada prawego przycisku
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// 2. Blokada skrótów klawiszowych
+document.addEventListener('keydown', function(e) {
+    if (
+        (e.ctrlKey && ['w','t','n','r'].includes(e.key.toLowerCase())) ||
+        e.key === 'F5'
+    ) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// 3. Pytanie przy próbie zamknięcia
+window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+});
+
+// 4. Otwieranie nowego okna przy zamknięciu (opcjonalne – ryzykowne!)
+// window.addEventListener('beforeunload', function() {
+//     window.open(location.href, '_blank');
+// });
+
+// 5. Pełny ekran po kliknięciu
+document.body.addEventListener('click', function() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
     }
 </script>
 
