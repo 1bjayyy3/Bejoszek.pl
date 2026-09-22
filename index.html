@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bejoszekpl</title>
+<style>
+    html, body {
+        margin: 0; padding: 0; height: 100%;
+        background: black; overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    /* ===== REALISTYCZNY PRZYCISK (bez napisu) ===== */
+    #redButton {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        outline: none;
+        padding: 0;
+        background:
+            radial-gradient(circle at 30% 25%, #ff8a8a 0%, #e62222 35%, #8b0000 75%, #3a0000 100%);
+        box-shadow:
+            inset 0 -10px 20px rgba(0,0,0,0.6),
+            inset 0 10px 20px rgba(255,255,255,0.25),
+            0 12px 25px rgba(0,0,0,0.7),
+            0 0 60px rgba(255,0,0,0.5);
+        transition: transform 0.08s ease, box-shadow 0.15s ease;
+    }
+
+    #redButton::before {
+        content: "";
+        position: absolute;
+        top: 12%; left: 20%;
+        width: 45%; height: 30%;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center,
+                    rgba(255,255,255,0.9) 0%,
+                    rgba(255,255,255,0.3) 40%,
+                    rgba(255,255,255,0) 70%);
+        filter: blur(2px);
+        pointer-events: none;
+    }
+
+    #redButton::after {
+        content: "";
+        position: absolute;
+        bottom: 10%; left: 25%;
+        width: 50%; height: 20%;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at center,
+                    rgba(255,150,150,0.4) 0%,
+                    rgba(255,150,150,0) 70%);
+        filter: blur(3px);
+        pointer-events: none;
+    }
+
+    #redButton:hover {
+        box-shadow:
+            inset 0 -10px 20px rgba(0,0,0,0.6),
+            inset 0 10px 20px rgba(255,255,255,0.3),
+            0 12px 25px rgba(0,0,0,0.7),
+            0 0 90px rgba(255,0,0,0.9);
+    }
+
+    #redButton:active {
+        transform: translate(-50%, -50%) scale(0.94);
+        box-shadow:
+            inset 0 -6px 15px rgba(0,0,0,0.7),
+            inset 0 6px 15px rgba(255,255,255,0.2),
+            0 4px 10px rgba(0,0,0,0.7),
+            0 0 40px rgba(255,0,0,0.7);
+    }
+
+    /* ===== TYTUŁ ===== */
+    #titleText {
+        position: absolute; top: 30px; width: 100%;
+        text-align: center; color: #fff;
+        font-size: 2.2rem; font-weight: bold;
+        letter-spacing: 6px; text-transform: uppercase;
+        text-shadow: 0 0 15px red, 0 0 30px red;
+        opacity: 0; transition: opacity 2s ease-in;
+        pointer-events: none; z-index: 5000;
+    }
+    #titleText.show { opacity: 1; }
+</style>
+</head>
+
+<body>
+
+<div id="titleText">THE FOG IS COMING</div>
+
+<button id="redButton" aria-label="button"></button>
+
+<audio id="backgroundAudio" loop>
+    <source src="fogis.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    const button    = document.getElementById('redButton');
+    const titleText = document.getElementById('titleText');
+    const audio     = document.getElementById('backgroundAudio');
+
+    const imgSrc      = "https://i.imgur.com/GY3zcTL.jpeg";
+    const fallbackImg = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Slender_Man_%28creepypasta%29.jpg/220px-Slender_Man_%28creepypasta%29.jpg";
+
+    let started = false;
+    let opened  = 0;
+    const targetCount = 30;
+
+    button.addEventListener('click', () => {
+        if (started) return;
+        started = true;
+
+        button.style.display = 'none';
+        titleText.classList.add('show');
+
+        audio.volume = 0.8;
+        audio.play().catch(err => console.warn("Audio:", err));
+
+        // Pierwsze okno od razu po kliknięciu
+        openRealWindow();
+    });
+
+    // Każde kolejne kliknięcie w tło = kolejne okno
+    document.body.addEventListener('click', (e) => {
+        if (!started) return;
+        if (e.target === button) return;
+        if (opened >= targetCount) return;
+
+        openRealWindow();
+    });
+
+    /* ===== PRAWDZIWE OKNO PRZEGLĄDARKI (samodzielne, z własnym ruchem) ===== */
+    function openRealWindow() {
+        opened++;
+
+        const w = 320;
+        const h = 280;
+        const x = Math.floor(Math.random() * Math.max(0, screen.availWidth  - w));
+        const y = Math.floor(Math.random() * Math.max(0, screen.availHeight - h));
+
+        // popup=yes + width/height/left/top = PRAWDZIWE nowe okno (nie karta)
+        const win = window.open(
+            '',
+            '_blank',
+            `popup=yes,width=${w},height=${h},left=${x},top=${y},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no`
+        );
+
+        if (!win) {
+            console.warn("Okno zablokowane — zezwól na wyskakujące okienka dla tej strony.");
+            return;
+        }
+
+        // Losowe prędkości, żeby każde okno ruszało się inaczej
+        const vx0 = (Math.random() - 0.5) * 20;
+        const vy0 = (Math.random() - 0.5) * 20;
+
+        // KLUCZOWE: Skrypt jest WKLEJONY do wnętrza okna,
+        // więc działa nawet po zamknięciu strony-rodzica.
+        try {
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>fog_${opened}.exe</title>
+                    <style>
+                        html,body {
+                            margin:0; padding:0; background:#000;
+                            overflow:hidden; height:100%; cursor:crosshair;
+                        }
+                        img {
+                            display:block; width:100%; height:auto;
+                            user-select:none; pointer-events:none;
+                        }
+                        .bar {
+                            background:#2a2a2a; color:#ddd;
+                            font:bold 11px 'Segoe UI',sans-serif;
+                            padding:4px 8px;
+                            display:flex; justify-content:space-between; align-items:center;
+                            border-bottom:1px solid #555;
+                        }
+                        .x {
+                            background:#555; color:#fff; border:none;
+                            width:18px; height:18px; font-size:11px; cursor:pointer;
+                        }
+                        .x:hover { background:red; }
+                    </style>
+                </head>
+                <body>
+                    <div class="bar">
+                        <span>fog_${opened}.exe</span>
+                        <button class="x" onclick="window.close()">X</button>
+                    </div>
+                    <img src="${imgSrc}" onerror="this.onerror=null;this.src='${fallbackImg}';">
+
+                    <script>
+                        // === SAMODZIELNY RUCH OKNA — działa nawet po zamknięciu strony-rodzica ===
+                        (function() {
+                            var vx = ${vx0};
+                            var vy = ${vy0};
+                            var x  = window.screenX || 0;
+                            var y  = window.screenY || 0;
+                            var w  = ${w};
+                            var h  = ${h};
+
+                            function tick() {
+                                try {
+                                    var maxX = (screen.availWidth  || screen.width)  - w;
+                                    var maxY = (screen.availHeight || screen.height) - h;
+
+                                    x += vx; y += vy;
+
+                                    if (x <= 0)    { x = 0;    vx =  Math.abs(vx); }
+                                    if (x >= maxX) { x = maxX; vx = -Math.abs(vx); }
+                                    if (y <= 0)    { y = 0;    vy =  Math.abs(vy); }
+                                    if (y >= maxY) { y = maxY; vy = -Math.abs(vy); }
+
+                                    window.moveTo(x, y);
+                                } catch(e) {}
+                                setTimeout(tick, 30);
+                            }
+                            tick();
+                        })();
+                    <\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        } catch (err) {
+            console.warn("Nie można wstawić treści do okna:", err);
+        }
+    }
+</script>
+
+<!-- ===== BLOKADA ZAMYKANIA (bez fullscreena) ===== -->
+<script>
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey && ['w','t','n','r'].includes(e.key.toLowerCase())) || e.key === 'F5') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+});
+</script>
+
+</body>
+</html>
